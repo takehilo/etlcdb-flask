@@ -1,0 +1,4 @@
+tensorflow
+sklearn
+pillow
+scipy
