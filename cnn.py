@@ -19,39 +19,49 @@ def deepnn(x):
     x_image = tf.reshape(x, [-1, 28, 28, 1])
 
     # First convolutional layer - maps one grayscale image to 32 feature maps.
-    W_conv1 = weight_variable([5, 5, 1, 32])
-    b_conv1 = bias_variable([32])
-    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+    with tf.name_scope('layer1'):
+        W_conv1 = weight_variable([5, 5, 1, 32])
+        b_conv1 = bias_variable([32])
+        h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+        tf.summary.histogram('activations', h_conv1)
 
-    # Pooling layer - downsamples by 2X.
-    h_pool1 = max_pool_2x2(h_conv1)
+        # Pooling layer - downsamples by 2X.
+        h_pool1 = max_pool_2x2(h_conv1)
+        tf.summary.histogram('pooling', h_pool1)
 
     # Second convolutional layer -- maps 32 feature maps to 64.
-    W_conv2 = weight_variable([5, 5, 32, 64])
-    b_conv2 = bias_variable([64])
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+    with tf.name_scope('layer2'):
+        W_conv2 = weight_variable([5, 5, 32, 64])
+        b_conv2 = bias_variable([64])
+        h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+        tf.summary.histogram('activations', h_conv2)
 
-    # Second pooling layer.
-    h_pool2 = max_pool_2x2(h_conv2)
+        # Second pooling layer.
+        h_pool2 = max_pool_2x2(h_conv2)
+        tf.summary.histogram('pooling', h_pool2)
 
     # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
     # is down to 7x7x64 feature maps -- maps this to 1024 features.
-    W_fc1 = weight_variable([7 * 7 * 64, 1024])
-    b_fc1 = bias_variable([1024])
+    with tf.name_scope('layer3'):
+        W_fc1 = weight_variable([7 * 7 * 64, 1024])
+        b_fc1 = bias_variable([1024])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+        h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])
+        h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+        tf.summary.histogram('activations', h_fc1)
 
     # Dropout - controls the complexity of the model, prevents co-adaptation of
     # features.
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-    # Map the 1024 features to 10 classes, one for each digit
-    W_fc2 = weight_variable([1024, 45])
-    b_fc2 = bias_variable([45])
+    with tf.name_scope('layer4'):
+        # Map the 1024 features to 10 classes, one for each digit
+        W_fc2 = weight_variable([1024, 45])
+        b_fc2 = bias_variable([45])
 
-    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+        y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+
     return y_conv, keep_prob
 
 
@@ -68,7 +78,10 @@ def max_pool_2x2(x):
 
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    # initial = tf.truncated_normal(shape, stddev=0.1)
+    # initial = tf.contrib.layers.xavier_initializer(False)(shape)
+    initial = tf.contrib.keras.initializers.glorot_normal()(shape)
+    # initial = tf.contrib.keras.initializers.he_normal()(shape)
     return tf.Variable(initial)
 
 
